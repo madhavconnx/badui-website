@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Rate Your Ride - Bad UI Edition</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+    body {
+        background: linear-gradient(45deg, #ff9ecb, #ffff8b);
+        font-family: "Comic Sans MS";
+        overflow: auto;
+        height: 100%;
+        margin: 0;
+    }
+    .box {
+        width: 95%;
+        margin: 10px auto;
+        padding: 12px;
+        border-radius: 20px;
+        border: 6px dashed red;
+        background: #ffffffaa;
+    }
+
+    .rating-icons {
+        display: flex;
+        justify-content: space-around;
+        margin: 10px 0;
+        font-size: 30px;
+        cursor: pointer;
+    }
+
+    #runaway {
+        padding: 10px 15px;
+        border: 4px double black;
+        background: orange;
+        font-weight: bold;
+        position: absolute;
+        transition: 0.3s;
+        cursor: pointer;
+    }
+
+    .loading {
+        display: none;
+        text-align: center;
+        margin-top: 10px;
+    }
+
+    .spinner {
+        width: 30px;
+        height: 30px;
+        border: 5px dashed purple;
+        border-radius: 50%;
+        animation: spin 0.9s linear infinite;
+        margin: auto;
+    }
+
+    @keyframes spin {
+        100% { transform: rotate(360deg); }
+    }
+
+    textarea {
+        width: 100%;
+    }
+</style>
+</head>
+
+<body>
+
+<div class="box">
+    <h3>🚎 Rate Your Ride (Terribly Designed Edition)</h3>
+
+    <!-- Confusing emoji rating -->
+    <div class="rating-icons" id="emojiBox">
+        <span class="emoji" data-val="5">🙂</span>
+        <span class="emoji" data-val="1">🙂</span>
+        <span class="emoji" data-val="3">🙂</span>
+    </div>
+
+    <!-- Self-sabotaging slider -->
+    <label>Comfort Slider (fights back)</label>
+    <input type="range" id="slider" min="0" max="100" value="50" style="width:100%;">
+
+    <br><br>
+
+    <label>Tell us more:</label>
+    <textarea id="feedback" rows="3"></textarea>
+
+    <br><br>
+
+    <button id="runaway">Submit Rating</button>
+
+    <div class="loading" id="loading">
+        <p>Submitting your feedback (forever)...</p>
+        <div class="spinner"></div>
+    </div>
+
+    <div id="result" style="margin-top:10px;font-size:14px;"></div>
+</div>
+
+<script>
+
+// 1️⃣ RANDOM RESULT GENERATOR
+const resultBox = document.getElementById("result");
+const emojis = document.querySelectorAll(".emoji");
+let selectedRating = null;
+
+emojis.forEach(e => {
+    e.onclick = () => {
+        // Confusing behavior: not the emoji they clicked
+        selectedRating = Math.floor(Math.random() * 5) + 1;
+        resultBox.innerHTML = "You selected: " + selectedRating + " (maybe)";
+    };
+});
+
+// 2️⃣ RUNAWAY BUTTON
+const btn = document.getElementById("runaway");
+btn.onmouseover = function () {
+    btn.style.top = Math.random() * 250 + "px";
+    btn.style.left = Math.random() * 250 + "px";
+};
+
+// 3️⃣ SLIDER SABOTAGE
+const slider = document.getElementById("slider");
+slider.oninput = () => {
+    slider.value = slider.value - (Math.random() * 30 - 15);
+};
+
+// 4️⃣ SUBMIT + FAKE LOADER
+btn.onclick = () => {
+    document.getElementById("loading").style.display = "block";
+
+    setTimeout(() => {
+        resultBox.innerHTML = `
+            <b>Final Ride Rating:</b> ${selectedRating ?? "undefined"} <br>
+            <b>Comfort:</b> ${slider.value} <br>
+            <b>Feedback:</b> ${feedback.value} <br>
+            <i>(This UI intentionally makes no sense)</i>
+        `;
+        document.getElementById("loading").style.display = "none";
+    }, Math.random() * 4000 + 1000);
+};
+
+// 5️⃣ Auto-reset when scrolled
+window.onscroll = () => {
+    slider.value = 50;
+    resultBox.innerHTML = "Form reset because you scrolled 🙂";
+};
+
+</script>
+
+</body>
+</html>
