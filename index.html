@@ -1,222 +1,130 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>Rate Your Ride - Ultimate Bad UI Edition 🎄</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<style>
+  <title>Fun Mode Rating Widget</title>
+  <style>
     body {
-        background: repeating-linear-gradient(45deg, #ffcccc, #ffe9b3 20px, #cfffce 40px);
-        font-family: "Comic Sans MS";
-        overflow: auto;
-        margin: 0;
-        height: 100%;
-        animation: wiggle 0.3s infinite alternate;
+      font-family: Arial;
+      background: linear-gradient(45deg, #ffeaea, #eaffff);
+      text-align: center;
+      padding: 40px;
     }
 
-    @keyframes wiggle {
-        from { transform: rotate(-0.3deg); }
-        to   { transform: rotate(0.3deg); }
+    h1 {
+      font-size: 35px;
+      animation: colorShift 1s infinite alternate;
     }
 
-    .box {
-        width: 95%;
-        margin: 10px auto;
-        padding: 12px;
-        border: 8px dashed green;
-        border-radius: 20px;
-        background: #ffffffcc;
-        box-shadow: 0 0 20px red;
+    @keyframes colorShift {
+      from { color: red; }
+      to { color: blue; }
     }
 
-    .rating-icons {
-        display: flex;
-        justify-content: space-around;
-        margin: 5px 0;
-        font-size: 28px;
-        cursor: pointer;
+    #widget {
+      margin: auto;
+      margin-top: 40px;
+      padding: 20px;
+      width: 350px;
+      background: #fff7d1;
+      border: 4px solid black;
+      position: relative;
     }
 
-    #runaway {
-        padding: 10px 15px;
-        border: 4px double red;
-        background: gold;
-        font-weight: bold;
-        position: absolute;
-        cursor: pointer;
-        transition: 0.2s;
-        box-shadow: 0 0 10px green;
+    .rateBtn {
+      padding: 10px 20px;
+      margin: 10px;
+      background: gold;
+      border: 2px solid black;
+      cursor: pointer;
+      transition: 0.3s;
+      position: relative;
     }
 
-    .loading {
-        display: none;
-        text-align: center;
-        margin-top: 10px;
+    #submitBtn {
+      padding: 12px 30px;
+      background: lightgreen;
+      border: 3px solid black;
+      cursor: pointer;
+      position: absolute;
     }
 
-    .spinner {
-        width: 28px;
-        height: 28px;
-        border: 5px dotted purple;
-        border-radius: 50%;
-        animation: spin 0.7s linear infinite;
-        margin: auto;
+    #progress {
+      margin-top: 20px;
+      display: none;
+      font-size: 20px;
+      color: purple;
     }
-
-    @keyframes spin {
-        100% { transform: rotate(360deg); }
-    }
-
-    textarea { width: 100%; }
-
-    /* Confetti hidden by default */
-    .confetti {
-        position: fixed;
-        width: 6px;
-        height: 6px;
-        background: red;
-        top: -10px;
-        animation: fall linear;
-    }
-
-    @keyframes fall {
-        to { transform: translateY(500px) rotate(360deg); }
-    }
-
-</style>
+  </style>
 </head>
-
 <body>
 
-<audio id="beep" src="https://www.soundjay.com/buttons/sounds/beep-07.mp3"></audio>
+<h1>😂 Rate Your Ride</h1>
 
-<div class="box">
-    <h3>🎄 Rate Your Ride (Holiday Chaos Edition)</h3>
+<div id="widget">
+  <div>Select Your Rating:</div>
 
-    <div class="rating-icons" id="emojiBox">
-        <span class="emoji" data-val="5">🎅</span>
-        <span class="emoji" data-val="1">🎅</span>
-        <span class="emoji" data-val="3">🎅</span>
-    </div>
+  <button class="rateBtn" onclick="chooseRating(1)">⭐</button>
+  <button class="rateBtn" onclick="chooseRating(2)">⭐⭐</button>
+  <button class="rateBtn" onclick="chooseRating(3)">⭐⭐⭐</button>
+  <button class="rateBtn" onclick="chooseRating(4)">⭐⭐⭐⭐</button>
+  <button class="rateBtn" onclick="chooseRating(5)">⭐⭐⭐⭐⭐</button>
 
-    <label>Comfort Slider (actively lies)</label>
-    <input type="range" id="slider" min="0" max="100" value="50" style="width:100%;">
+  <div id="chosen" style="margin-top:10px;"></div>
 
-    <br><br>
+  <button id="submitBtn" onclick="submitRating()">Submit</button>
 
-    <label>Tell us more:</label>
-    <textarea id="feedback" rows="3"></textarea>
-
-    <br><br>
-
-    <button id="runaway">Catch Me 🎁</button>
-
-    <div class="loading" id="loading">
-        <p>Uploading your vibes...</p>
-        <div class="spinner"></div>
-    </div>
-
-    <div id="result" style="margin-top:10px;font-size:14px;"></div>
-
-    <div id="loopText" style="font-size:10px; margin-top:5px; color:darkred;"></div>
+  <div id="progress">Uploading… 0%</div>
 </div>
 
 <script>
+let rating = 0;
 
-// 🎮 Mini-game: Must "catch" submit button
-let caught = false;
-
-// 🔊 annoying beep sound
-const snd = document.getElementById("beep");
-
-// Confetti generator
-function dropConfetti() {
-    for (let i = 0; i < 20; i++) {
-        let c = document.createElement("div");
-        c.className = "confetti";
-        c.style.left = Math.random() * 300 + "px";
-        c.style.animationDuration = (Math.random() * 2 + 2) + "s";
-        c.style.background = ["red","green","gold","silver"][Math.floor(Math.random()*4)];
-        document.body.appendChild(c);
-        setTimeout(() => c.remove(), 3000);
-    }
-}
-
-// Looping text annoyance
-let loopIndex = 0;
-setInterval(() => {
-    document.getElementById("loopText").innerText =
-        "Processing… " + ["🎄","❄️","🎁","🚌","💫"][loopIndex++ % 5];
-}, 200);
-
-// Emoji chaos
-const resultBox = document.getElementById("result");
-const emojis = document.querySelectorAll(".emoji");
-let selectedRating = null;
-
-emojis.forEach(e => {
-    e.onclick = () => {
-        snd.play();
-        selectedRating = Math.floor(Math.random() * 5) + 1;
-        resultBox.innerHTML = "You clicked Santa, so your rating is: " + selectedRating;
-    };
+// Fun: randomly move the Submit button
+document.getElementById("submitBtn").addEventListener("mouseover", function() {
+  this.style.left = Math.random() * 250 + "px";
+  this.style.top = Math.random() * 250 + "px";
 });
 
-// Runaway submit button
-const btn = document.getElementById("runaway");
+function chooseRating(r) {
+  rating = r;
+  document.getElementById("chosen").innerText = 
+    "You selected: " + r + " ⭐ (probably)";
+}
 
-btn.onmouseover = function () {
-    if (!caught) {
-        btn.style.top = Math.random() * 200 + "px";
-        btn.style.left = Math.random() * 250 + "px";
-        snd.play();
+function submitRating() {
+  if (rating === 0) {
+    alert("You didn’t choose anything… but okay!");
+  }
+
+  let progress = 0;
+  let bar = document.getElementById("progress");
+  bar.style.display = "block";
+
+  let interval = setInterval(() => {
+    progress += Math.floor(Math.random() * 30);
+
+    if (progress > 99) progress = 99; // Funny stuck state
+
+    bar.innerText = "Uploading… " + progress + "%";
+
+    if (progress >= 99) {
+      clearInterval(interval);
+
+      setTimeout(() => {
+        const funnyMessages = [
+          "Success! Your rating was eaten by raccoons.",
+          "Uploaded! Our server is confused now.",
+          "We stored your rating under someone's name… not sure who.",
+          "Your rating is now floating in the cloud. Literally.",
+          "Done! But we lost the data. Try again maybe?"
+        ];
+
+        alert(funnyMessages[Math.floor(Math.random() * funnyMessages.length)]);
+        bar.style.display = "none";
+      }, 1000);
     }
-};
-
-btn.onclick = () => {
-    caught = true;
-    btn.innerText = "Submitting...";
-    snd.play();
-
-    document.getElementById("loading").style.display = "block";
-
-    setTimeout(() => {
-        // AI Analyzer that always guesses wrong
-        const moods = ["Angry", "Sleepy", "Confused", "Dizzy", "Overjoyed"];
-        const aiMood = moods[Math.floor(Math.random() * moods.length)];
-
-        dropConfetti(); // celebrate errors
-
-        resultBox.innerHTML = `
-            <b>AI Mood Analyzer says you're:</b> ${aiMood} <br><br>
-            <b>Your Rating:</b> ${selectedRating ?? "??"} <br>
-            <b>Comfort:</b> ${slider.value} <br>
-            <b>Feedback:</b> ${feedback.value || "None"} <br>
-            <i>(Results may be inaccurate. Actually, they ARE inaccurate.)</i>
-        `;
-
-        document.getElementById("loading").style.display = "none";
-
-        // fake vibration
-        document.body.style.transform = "translateX(4px)";
-        setTimeout(() => document.body.style.transform = "translateX(-4px)", 50);
-        setTimeout(() => document.body.style.transform = "translateX(0)", 100);
-
-    }, Math.random() * 4000 + 1000);
-};
-
-// Slider lies
-const slider = document.getElementById("slider");
-slider.oninput = () => {
-    slider.value = slider.value - (Math.random() * 40 - 20);
-};
-
-// Auto-reset on scroll
-window.onscroll = () => {
-    resultBox.innerHTML = "🎅 Ho Ho Ho! Your form reset because... why not?";
-    slider.value = 50;
-    dropConfetti();
-};
-
+  }, 500);
+}
 </script>
 
 </body>
